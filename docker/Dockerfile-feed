@@ -1,0 +1,7 @@
+FROM ubuntu:latest
+
+WORKDIR /app
+COPY ./bin/feed /app/feed
+EXPOSE 80
+EXPOSE 5000
+CMD ["/app/feed"]

@@ -1,0 +1,65 @@
+version: "3.3"
+
+services:
+  authentication:
+    image: auth-service:latest
+    build: ./docker/Dockerfile-auth
+
+    depends_on:
+      - reverse-proxy
+      - postgres-db
+      - minio-storage
+    labels:
+      - traefik.http.routers.authentication.rule=Host(`auth.socialmedia.com`)
+
+  feed:
+    image: feed-service:latest
+    build: ./docker/Dockerfile-feed
+
+    depends_on:
+      - mongo-db
+      - minio-storage
+      - authentication
+
+    labels:
+      - traefik.http.routers.feed.rule=Host(`feed.socialmedia.com`)
+
+  prometheus-monitor:
+    image: prom/prometheus:latest
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
+
+    ports:
+      - "9090:9090"
+      
+  grafana-monitor:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+      
+  postgres-db:
+    image: postgres:alpine
+    environment:
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_DB=auth
+
+  mongo-db:
+    image: mongo:latest
+
+  minio-storage:
+    image: minio/minio:latest
+    environment:
+      - MINIO_ADDRESS=:9000
+      - MINIO_CONSOLE_ADDRESS=:9001
+    ports:
+      - "9001:9001" 
+    command: minio server /data
+
+  reverse-proxy:
+    image: traefik:v2.9
+    command: --api.insecure=true --providers.docker
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

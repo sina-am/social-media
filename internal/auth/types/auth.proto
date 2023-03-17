@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option go_package = "github.com/sina-am/social-media/internal/auth/types";
+package types;
+
+// Interface exported by the server.
+service Authentication {
+  
+  rpc ObtainAccount(JWTToken) returns (Account) {}
+  rpc GetAccountByID(GetAccountRequest) returns (Account) {}
+}
+
+message GetAccountRequest {
+  string account_id = 1;
+}
+
+message JWTToken {
+  string token = 1; 
+  string type =  2; 
+}
+
+
+message Account {
+  string id = 1;
+  string username = 2;
+  string name = 3;
+  string email = 4;
+  string last_login = 5;
+  string created_at = 6;
+  string avatar = 7;
+  
+}
