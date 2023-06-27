@@ -37,7 +37,7 @@ func OverwriteWithSettingFromCli(settings *Settings) {
 
 	flag.Parse()
 
-	if address != nil {
+	if *address != "" {
 		settings.HTTPAddress = *address
 	}
 }

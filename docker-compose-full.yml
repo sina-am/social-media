@@ -1,7 +1,7 @@
 version: "3.3"
 
 services:
-  authentication:
+  auth:
     image: auth-service:latest
     build: ./docker/Dockerfile-auth
 
@@ -10,7 +10,7 @@ services:
       - postgres-db
       - minio-storage
     labels:
-      - traefik.http.routers.authentication.rule=Host(`auth.socialmedia.com`)
+      - traefik.http.routers.auth.rule=Host(`auth.socialmedia.com`)
 
   feed:
     image: feed-service:latest
@@ -19,10 +19,24 @@ services:
     depends_on:
       - mongo-db
       - minio-storage
-      - authentication
+      - auth
 
     labels:
       - traefik.http.routers.feed.rule=Host(`feed.socialmedia.com`)
+
+  chat:
+    image: chat-service:latest
+    build: 
+      context: ./
+      dockerfile: ./docker/Dockerfile-chat
+
+    environment:
+      - HTTP_ADDRESS=:8080
+      - AUTH_ADDRESS=auth-service:5000
+      - MONGO_URI=mongodb://mongo-db:27017
+
+    labels:
+      - traefik.http.routers.chat.rule=Host(`chat.socialmedia.com`)
 
   prometheus-monitor:
     image: prom/prometheus:latest

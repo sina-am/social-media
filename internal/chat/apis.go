@@ -55,9 +55,16 @@ func (s *APIServer) createChat(ctx context.Context, w http.ResponseWriter, r *ht
 }
 
 func (s *APIServer) wsHandler(w http.ResponseWriter, r *http.Request) {
+	s.Logger.Info("Message")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	tokenStr := r.URL.Query().Get("token")
+	if tokenStr == "" {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("invalid token"))
+		return
+	}
 	token := &types.JWTToken{
 		Token: r.URL.Query().Get("token"),
 		Type:  "bearer",
@@ -74,6 +81,7 @@ func (s *APIServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
+	s.Logger.Info("connection received")
 
 	accountId := uuid.MustParse(account.Id)
 	onlineAccount := NewOnlineAccount(accountId)
@@ -90,13 +98,18 @@ func (s *APIServer) wsHandler(w http.ResponseWriter, r *http.Request) {
 	}(ctx)
 
 	for {
+		s.Logger.Info("inside loop")
 		var msgIn MessageIn
 		if err := conn.ReadJSON(&msgIn); err != nil {
-			conn.WriteJSON(web.Errorf(http.StatusBadRequest, "invalid message received"))
+			if err := conn.WriteJSON(web.Errorf(http.StatusBadRequest, "invalid message received")); err != nil {
+				return
+			}
 			continue
 		}
 		if err := msgIn.Validate(); err != nil {
-			conn.WriteJSON(web.Errorf(http.StatusBadRequest, "invalid message received"))
+			if err := conn.WriteJSON(web.Errorf(http.StatusBadRequest, "invalid message received")); err != nil {
+				return
+			}
 			continue
 		}
 

@@ -1,13 +1,21 @@
-FROM golang:latest AS build
+# FROM golang:latest AS build
 
-WORKDIR /build
-COPY . .
-RUN go build -o bin/chat github.com/sina-am/social-media/internal/chat 
+# WORKDIR /build
+# COPY . .
+# RUN go build -o bin/chat github.com/sina-am/social-media/internal/chat 
+
+
+# FROM ubuntu:latest
+
+# WORKDIR /app
+# COPY --from=build /build/bin/chat /app/chat
+
+# CMD ["/app/chat"]
 
 
 FROM ubuntu:latest
 
 WORKDIR /app
-COPY --from=build /build/bin/chat /app/chat
-
-CMD ["/app/chat"]
+COPY ./bin/chat /app/auth
+EXPOSE 80
+CMD ["/app/auth"]
